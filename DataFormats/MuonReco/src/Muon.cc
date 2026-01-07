@@ -70,7 +70,7 @@ int Muon::numberOfMatches(ArbitrationType type) const {
     if (type == GEMSegmentAndTrackArbitration) {
       for (auto& segmentMatch : chamberMatch.gemMatches) {
         if (segmentMatch.isMask(MuonSegmentMatch::BestInChamberByDX) &&
-            segmentMatch.isMask(MuonSegmentMatch::BelongsToTrackByDR)) {
+            segmentMatch.isMask(MuonSegmentMatch::BelongsToTrackByDX)) {
           matches++;
           break;
         }
@@ -464,8 +464,8 @@ std::pair<const MuonChamberMatch*, const MuonSegmentMatch*> Muon::pair(
             segmentMatch->isMask(MuonSegmentMatch::BelongsToTrackByCleaning))
           return std::make_pair(*chamberMatch, &(*segmentMatch));
       if (type == GEMSegmentAndTrackArbitration){
-        if (segmentMatch->isMask(MuonSegmentMatch::BestInChamberByDR) &&
-            segmentMatch->isMask(MuonSegmentMatch::BelongsToTrackByDR)){
+        if (segmentMatch->isMask(MuonSegmentMatch::BestInChamberByDX) &&
+            segmentMatch->isMask(MuonSegmentMatch::BelongsToTrackByDX)){
           return std::make_pair(*chamberMatch, &(*segmentMatch));
           std::cout << "pair found!!" <<std::endl;
             }
