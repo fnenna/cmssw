@@ -184,18 +184,15 @@ float muon::segmentCompatibility(const reco::Muon& muon, reco::Muon::Arbitration
         // since for eta > 2., the muon can cross up to 5 stations (1 ME0 + 4 CSC)
         // does not influence DTs and CSC up to eta<~2.
         case 5:
-          if (hasME0) {
-            if (position_in_stations <= 2)
-              station_weight[i - 1] = 0.10f;
-            else if (position_in_stations == 3)
-              station_weight[i - 1] = 0.20f;
-            else if (position_in_stations == 4)
-              station_weight[i - 1] = 0.25f;
-            else
-              station_weight[i - 1] = 0.35f;
-            break;
-          } else
-            [[fallthrough]];
+          if (position_in_stations <= 2)
+            station_weight[i - 1] = 0.10f;
+          else if (position_in_stations == 3)
+            station_weight[i - 1] = 0.20f;
+          else if (position_in_stations == 4)
+            station_weight[i - 1] = 0.25f;
+          else
+            station_weight[i - 1] = 0.35f;
+          break;
 
         default:
           // 	LogTrace("MuonIdentification")<<"            // Message: A muon candidate track has more than 4 stations with matching segments.";
@@ -290,7 +287,11 @@ float muon::segmentCompatibility(const reco::Muon& muon, reco::Muon::Arbitration
             }
           }
         } else {  // We are in the ME0
-          const float pullX = muon.pullX(i - 5, 4, reco::Muon::GEMSegmentAndTrackArbitration);  // no Y info because it's rough for ME0, a future implementation could be adding dXdZ
+          const float pullX = muon.pullX(
+              i - 5,
+              4,
+              reco::Muon::
+                  GEMSegmentAndTrackArbitration);  // no Y info because it's rough for ME0, a future implementation could be adding dXdZ
           if (pullX > 1.f) {                       // reduce weight
             if (use_match_dist_penalty) {
               station_weight[i - 1] *= 1.f / std::pow(fabs(pullX), .125);
@@ -368,7 +369,8 @@ bool muon::isGoodMuon(const reco::Muon& muon,
         //only rely on segmentCompatibility since caloCompatibility is not correct in the HGCAL coverage
         return goodMuon = ((2 * segmentCompatibility(muon, arbitrationType)) > minCompatibility);
       } else {
-        return goodMuon = (((0.8 * caloCompatibility(muon)) + (1.2 * segmentCompatibility(muon, arbitrationType))) > minCompatibility);
+        return goodMuon = (((0.8 * caloCompatibility(muon)) + (1.2 * segmentCompatibility(muon, arbitrationType))) >
+                           minCompatibility);
       }
     default:
       // 	LogTrace("MuonIdentification")<<"            // Invalid Algorithm Type called!";
