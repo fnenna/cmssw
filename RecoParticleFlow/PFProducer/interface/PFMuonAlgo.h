@@ -146,6 +146,7 @@ private:
   const double punchThroughFactor_;
   const double punchThroughMETFactor_;
   const double cosmicRejDistance_;
+  const bool hasME0_;
 
   double sumetPU_;
   double sumet_;

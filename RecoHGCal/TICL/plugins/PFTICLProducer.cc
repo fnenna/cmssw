@@ -47,7 +47,7 @@ PFTICLProducer::PFTICLProducer(const edm::ParameterSet& conf)
       energy_from_regression_(conf.getParameter<bool>("energyFromRegression")),
       ticl_candidates_(consumes<edm::View<TICLCandidate>>(conf.getParameter<edm::InputTag>("ticlCandidateSrc"))),
       muons_(consumes<reco::MuonCollection>(conf.getParameter<edm::InputTag>("muonSrc"))),
-      pfmu_(std::make_unique<PFMuonAlgo>(conf.getParameterSet("pfMuonAlgoParameters"),
+      pfmu_(std::make_unique<PFMuonAlgo>(conf.getParameterSet("PFMuonAlgoParameters"),
                                          false)) {  // postMuonCleaning = false
   produces<reco::PFCandidateCollection>();
 }
@@ -66,7 +66,7 @@ void PFTICLProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   desc.add<edm::InputTag>("muonSrc", edm::InputTag("muons1stStep"));
   edm::ParameterSetDescription psd_PFMuonAlgo;
   PFMuonAlgo::fillPSetDescription(psd_PFMuonAlgo);
-  desc.add<edm::ParameterSetDescription>("pfMuonAlgoParameters", psd_PFMuonAlgo);
+  desc.add<edm::ParameterSetDescription>("PFMuonAlgoParameters", psd_PFMuonAlgo);
   //
   descriptions.add("pfTICLProducer", desc);
 }

@@ -95,7 +95,8 @@ hltParticleFlowTmpBarrel = cms.EDProducer("PFProducer",
         ptFactorForHighEta = cms.double(2),
         punchThroughFactor = cms.double(3),
         punchThroughMETFactor = cms.double(4),
-        trackQuality = cms.string('highPurity')
+        trackQuality = cms.string('highPurity'),
+        hasME0 = cms.bool(False)
     ),
     blocks = cms.InputTag("hltParticleFlowBlock"),
     calibHF_a_EMHAD = cms.vdouble(

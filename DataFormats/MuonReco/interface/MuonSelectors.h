@@ -142,10 +142,14 @@ namespace muon {
 
   reco::Muon::Selector selectorFromString(const std::string& label);
 
-  /// main GoodMuon wrapper call
   bool isGoodMuon(const reco::Muon& muon,
                   SelectionType type,
                   reco::Muon::ArbitrationType arbitrationType = reco::Muon::SegmentAndTrackArbitration);
+
+  bool isGoodMuon(const reco::Muon& muon,
+                  SelectionType type,
+                  reco::Muon::ArbitrationType arbitrationType,
+                  bool isPhase2);
 
   // ===========================================================================
   //                               Support functions
@@ -156,7 +160,8 @@ namespace muon {
   bool isGoodMuon(const reco::Muon& muon,
                   AlgorithmType type,
                   double minCompatibility,
-                  reco::Muon::ArbitrationType arbitrationType);
+                  reco::Muon::ArbitrationType arbitrationType,
+                  bool isPhase2 = false);
 
   bool isGoodMuon(const reco::Muon& muon,
                   AlgorithmType type,
