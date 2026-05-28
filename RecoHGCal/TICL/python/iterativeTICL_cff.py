@@ -123,7 +123,8 @@ pfTICL = _pfTICLProducer.clone(
     ticlCandidateSrc = cms.InputTag('ticlCandidate'), 
     useTimingAverage=True
 )
-
+from RecoParticleFlow.PFProducer.pfMuon_cfi import PFMuonAlgoParameters
+pfTICL.PFMuonAlgoParameters = PFMuonAlgoParameters
 
 
 ticlPFTask = cms.Task(pfTICL)

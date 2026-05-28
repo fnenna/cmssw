@@ -24,6 +24,12 @@ from RecoParticleFlow.PFProducer.chargedHadronPFTrackIsolation_cfi import *
 from RecoJets.JetProducers.fixedGridRhoProducerFastjet_cfi import *
 fixedGridRhoFastjetAllTmp = fixedGridRhoFastjetAll.clone(pfCandidatesTag = "particleFlowTmp")
 
+from RecoParticleFlow.PFProducer.pfMuon_cfi import PFMuonAlgoParameters
+particleFlowTmp.PFMuonAlgoParameters = PFMuonAlgoParameters
+
+from Configuration.Eras.Modifier_phase2_GE0_cff import phase2_GE0
+phase2_GE0.toModify(particleFlowTmp.PFMuonAlgoParameters, hasME0 = True)
+
 particleFlowTmpTask = cms.Task(particleFlowTmp)
 particleFlowTmpSeq = cms.Sequence(particleFlowTmpTask)
 

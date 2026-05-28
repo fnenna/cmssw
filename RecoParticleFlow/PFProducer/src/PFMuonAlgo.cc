@@ -14,6 +14,8 @@ using namespace std;
 using namespace reco;
 using namespace boost;
 
+bool PFMuonAlgo::hasME0_ = false;
+
 PFMuonAlgo::PFMuonAlgo(const edm::ParameterSet& iConfig, bool postMuonCleaning)
 
     : pfCosmicsMuonCleanedCandidates_(),
@@ -43,7 +45,9 @@ PFMuonAlgo::PFMuonAlgo(const edm::ParameterSet& iConfig, bool postMuonCleaning)
       minPunchThroughEnergy_(iConfig.getParameter<double>("minEnergyForPunchThrough")),
       punchThroughFactor_(iConfig.getParameter<double>("punchThroughFactor")),
       punchThroughMETFactor_(iConfig.getParameter<double>("punchThroughMETFactor")),
-      cosmicRejDistance_(iConfig.getParameter<double>("cosmicRejectionDistance")) {}
+      cosmicRejDistance_(iConfig.getParameter<double>("cosmicRejectionDistance")) {
+  hasME0_ = iConfig.getParameter<bool>("hasME0");
+}
 
 bool PFMuonAlgo::isMuon(const reco::PFBlockElement& elt) {
   const auto* eltTrack = dynamic_cast<const reco::PFBlockElementTrack*>(&elt);
@@ -177,15 +181,20 @@ bool PFMuonAlgo::isTrackerTightMuon(const reco::MuonRef& muonRef) {
 
   unsigned nTrackerHits = track.hitPattern().numberOfValidTrackerHits();
 
-  if (nTrackerHits <= 12)
+  if (hasME0_ && std::abs(muonRef->eta()) > 2.3) {
+    return nTrackerHits > 8;
+  } else if (nTrackerHits <= 12) {
     return false;
+  }
 
   bool isAllArbitrated = muon::isGoodMuon(*muonRef, muon::AllArbitrated);
 
-  bool isTM2DCompatibilityTight = muon::isGoodMuon(*muonRef, muon::TM2DCompatibilityTight);
+  bool isTM2DCompatibilityTight =
+      muon::isGoodMuon(*muonRef, muon::TM2DCompatibilityTight, reco::Muon::SegmentAndTrackArbitration, hasME0_);
 
-  if (!isAllArbitrated || !isTM2DCompatibilityTight)
+  if (!isAllArbitrated || !isTM2DCompatibilityTight) {
     return false;
+  }
 
   if ((trackerMu->ptError() / trackerMu->pt() > 0.10)) {
     //std::cout<<" PT ERROR > 10 % "<< trackerMu->pt() <<std::endl;
@@ -1063,4 +1072,5 @@ void PFMuonAlgo::fillPSetDescription(edm::ParameterSetDescription& iDesc) {
   iDesc.add<double>("punchThroughFactor", 3.0);
   iDesc.add<double>("punchThroughMETFactor", 4.0);
   iDesc.add<double>("cosmicRejectionDistance", 1.0);
+  iDesc.add<bool>("hasME0", true);
 }

@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 hltPfTICL = cms.EDProducer("PFTICLProducer",
     mightGet = cms.optional.untracked.vstring,
     muonSrc = cms.InputTag("hltPhase2L3Muons"),
-    pfMuonAlgoParameters = cms.PSet(
+    PFMuonAlgoParameters = cms.PSet(
         cosmicRejectionDistance = cms.double(1),
         eventFactorForCosmics = cms.double(10),
         eventFractionForCleaning = cms.double(0.5),
@@ -22,7 +22,8 @@ hltPfTICL = cms.EDProducer("PFTICLProducer",
         ptFactorForHighEta = cms.double(2),
         punchThroughFactor = cms.double(3),
         punchThroughMETFactor = cms.double(4),
-        trackQuality = cms.string('highPurity')
+        trackQuality = cms.string('highPurity'),
+        hasME0 = cms.bool(False)
     ),
     ticlCandidateSrc = cms.InputTag("hltTiclCandidate"),
     timingQualityThreshold = cms.double(0.5),
