@@ -949,7 +949,57 @@ void MuonIdProducer::fillMuonId(edm::Event& iEvent,
     matchedChamber.edgeY = chamber.localDistanceY;
 
     matchedChamber.id = chamber.id;
+    
+    // --- control and initialization of phi variables ---
+    // dummy default values for DT CSC and RPC
+    matchedChamber.phi = 9999;
+    matchedChamber.dPhidZ = 9999;
+    matchedChamber.phiErr = 0;
+    matchedChamber.dPhidZErr = 0;
+    /*
+    // Fill phi variables only for ME0
+    if (chamber.id.subdetId() == MuonSubdetId::GEM && GEMDetId(chamber.id.rawId()).station() == 0) {
+      
+      matchedChamber.phi = gPos.phi().value();
+      
+      float r2 = gPos.x() * gPos.x() + gPos.y() * gPos.y();
+      float r = sqrt(r2);
+      matchedChamber.phiErr = (r2 > 0) ? (matchedChamber.xErr / sqrt(r2)) : 0;
 
+      std::cout << "\n now chamber: ME0/GEM St0 Δx/Δz = " << matchedChamber.dXdZ << std::endl;
+      
+      // Identify Layer 1 of the same chamber
+      const GEMDetId me0id(chamber.id);
+      GEMDetId layer1Id(
+          me0id.region(),
+          me0id.ring(),
+          me0id.station(),
+          1,
+          me0id.chamber(),
+          me0id.ieta()
+      );
+      const GeomDet* layer1 = gemGeometry_->idToDet(layer1Id);
+      if (!layer1) continue;  // check null pointer
+
+      // Propagate track state to layer 1
+      auto tsos_layer1 = propagator.propagate(chamber.tState, layer1->surface());
+      if (!tsos_layer1.isValid()) continue;
+
+      GlobalPoint gPos_l1 = tsos_layer1.globalPosition();
+
+      // Compute slope from two points in detector
+      float dphi = reco::deltaPhi(gPos_l1.phi().value(), gPos.phi().value());
+      float dz = gPos_l1.z() - gPos.z();
+      float dphi_dz = (fabs(dz) > 1e-6) ? dphi / dz : 9999;
+      
+      // Ora salviamo il valore REALE nella nuova variabile dPhidZ dell'oggetto!
+      matchedChamber.dPhidZ = dphi_dz; 
+      matchedChamber.dPhidZErr = matchedChamber.dXdZErr / r;
+      // Debug
+      std::cout << "ME0 filled in matchedChamber -> phi: " << matchedChamber.phi 
+                << " | dphi/dz: " << matchedChamber.dPhidZ << " rad/cm" << std::endl;
+    }
+    */
     if (fillShowerDigis_ && fillMatching_) {
       theShowerDigiFiller_->fill(matchedChamber);
     } else {
