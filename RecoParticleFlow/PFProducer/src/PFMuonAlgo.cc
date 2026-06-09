@@ -14,7 +14,7 @@ using namespace std;
 using namespace reco;
 using namespace boost;
 
-bool PFMuonAlgo::hasME0_ = false;
+//bool PFMuonAlgo::hasME0_ = false;
 
 PFMuonAlgo::PFMuonAlgo(const edm::ParameterSet& iConfig, bool postMuonCleaning)
 
@@ -45,8 +45,8 @@ PFMuonAlgo::PFMuonAlgo(const edm::ParameterSet& iConfig, bool postMuonCleaning)
       minPunchThroughEnergy_(iConfig.getParameter<double>("minEnergyForPunchThrough")),
       punchThroughFactor_(iConfig.getParameter<double>("punchThroughFactor")),
       punchThroughMETFactor_(iConfig.getParameter<double>("punchThroughMETFactor")),
-      cosmicRejDistance_(iConfig.getParameter<double>("cosmicRejectionDistance")) {
-  hasME0_ = iConfig.getParameter<bool>("hasME0");
+      cosmicRejDistance_(iConfig.getParameter<double>("cosmicRejectionDistance")),
+      hasME0_(iConfig.getParameter<bool>("hasME0")){
 }
 
 bool PFMuonAlgo::isMuon(const reco::PFBlockElement& elt) {
