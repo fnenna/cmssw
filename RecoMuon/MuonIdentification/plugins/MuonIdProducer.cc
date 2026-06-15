@@ -1531,6 +1531,7 @@ void MuonIdProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   desc.add<bool>("arbitrateTrackerMuons", false);
   desc.add<bool>("storeCrossedHcalRecHits", false);
   desc.add<bool>("fillShowerDigis", false);
+  desc.add<bool>("isPhase2", false);
   desc.ifValue(
       edm::ParameterDescription<bool>("selectHighPurity", false, true),
       true >> (edm::ParameterDescription<edm::InputTag>("pvInputTag", edm::InputTag("offlinePrimaryVertices"), true)) or

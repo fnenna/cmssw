@@ -37,7 +37,7 @@ def customiseForOffline(process):
 
     return process
 
-def customizeForME0(process):
+def customizeHLTFor51053(process):
     for module in producers_by_type(process, "MuonIdProducer"):
         if not hasattr(module, "isPhase2"):
             module.isPhase2 = cms.bool(False)
@@ -215,6 +215,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
     # process = customiseFor12718(process)
 
     # process = customizeHLTfor49436(process)
-    process = customizeForME0(process)
+    process = customizeHLTFor51053(process)
 
     return process

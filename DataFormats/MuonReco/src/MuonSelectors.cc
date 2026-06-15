@@ -51,6 +51,16 @@ unsigned int muon::RequiredStationMask(const reco::Muon& muon,
         theMask += 1 << ((stationIdx - 1) + 4 * (detectorIdx - 1));
     }
   }
+
+  // Adding ME0 for Phase-2
+  int station0Idx = 0;
+  int detector4Idx = 4;
+  float dist0 = muon.trackDist(station0Idx, detector4Idx, arbitrationType);
+  if (dist0 < maxChamberDist &&
+      dist0 < maxChamberDistPull * muon.trackDistErr(station0Idx, detector4Idx, arbitrationType)) {
+    theMask += 1 << 9;
+  }
+
   return theMask;
 }
 
@@ -306,18 +316,15 @@ float muon::segmentCompatibility(const reco::Muon& muon, reco::Muon::Arbitration
                   break;  // take the first valid
                 }
               }
+              break;
             }
           }
-          switch (ME0_nHits) {
-            case 4:
-              station_weight[i - 1] *= 0.77f;
-              break;
-            case 5:
-              station_weight[i - 1] *= 0.85f;
-              break;
-            default:
-              station_weight[i - 1] *= 1.0f;
-              break;
+          if (ME0_nHits >= 4) {
+            // Has valid ME0 segment - apply hit-based penalty
+            station_weight[i - 1] *= (ME0_nHits == 6) ? 1.0f : (ME0_nHits == 5) ? 0.85f : 0.77f;
+          } else {
+            // No ME0 segments - full penalization
+            station_weight[i - 1] = 0.f;
           }
         }
       }

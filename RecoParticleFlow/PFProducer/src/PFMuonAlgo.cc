@@ -211,6 +211,10 @@ bool PFMuonAlgo::isGlobalLooseMuon(const reco::MuonRef& muonRef) {
   unsigned nMuonHits =
       standAloneMu->hitPattern().numberOfValidMuonDTHits() + 2 * standAloneMu->hitPattern().numberOfValidMuonCSCHits();
 
+  if (muonRef->isPhase2Muon()) {
+    nMuonHits += standAloneMu->hitPattern().numberOfValidMuonGEMHits();
+  }
+
   bool quality = false;
 
   if (muonRef->isTrackerMuon()) {
