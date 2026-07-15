@@ -21,8 +21,9 @@ struct SortMuonSegmentMatches {
     reco::MuonSegmentMatch* sm2 = p2.second;
 
     if (flag_ == reco::MuonSegmentMatch::BestInChamberByDX || flag_ == reco::MuonSegmentMatch::BestInStationByDX ||
-        flag_ == reco::MuonSegmentMatch::BelongsToTrackByDX)
+        flag_ == reco::MuonSegmentMatch::BelongsToTrackByDX) {
       return fabs(sm1->x - cm1->x) < fabs(sm2->x - cm2->x);
+      }
     if (flag_ == reco::MuonSegmentMatch::BestInChamberByDR || flag_ == reco::MuonSegmentMatch::BestInStationByDR ||
         flag_ == reco::MuonSegmentMatch::BelongsToTrackByDR) {
       if ((!sm1->hasZed()) || (!sm2->hasZed()))  // no y information so return dx
@@ -41,6 +42,31 @@ struct SortMuonSegmentMatches {
         return fabs(sm1->dXdZ - cm1->dXdZ) < fabs(sm2->dXdZ - cm2->dXdZ);
       return sqrt(pow(sm1->dXdZ - cm1->dXdZ, 2) + pow(sm1->dYdZ - cm1->dYdZ, 2)) <
              sqrt(pow(sm2->dXdZ - cm2->dXdZ, 2) + pow(sm2->dYdZ - cm2->dYdZ, 2));
+    }
+    if (flag_ == reco::MuonSegmentMatch::BestInChamberByDX_DPhiDZ ||
+        flag_ == reco::MuonSegmentMatch::BestInStationByDX_DPhiDZ ||
+        flag_ == reco::MuonSegmentMatch::BelongsToTrackByDX_DPhiDZ) {
+          if (fabs(sm1->y - cm1->y)>3*sqrt(pow(sm1->yErr,2)+pow(cm1->yErr,2))){
+            std::cout << "Bad segment: Dy too large" << std::endl;
+          return false;
+        }
+        double dx1 = sm1->x - cm1->x;
+        double dDphiDz1 = sm1->dPhidZ - cm1->dPhidZ;
+        double dx2 = sm2->x - cm2->x;
+        double dDphiDz2 = sm2->dPhidZ - cm2->dPhidZ;
+
+        double dx_norm = 1.5;
+        double dDphiDz_norm = 0.0005;
+
+        double pull_x1 = std::abs(dx1 / dx_norm);
+        double norm_dDphiDz1 = std::abs(dDphiDz1 / dDphiDz_norm);
+        double pull_x2 = std::abs(dx2 / dx_norm);
+        double norm_dDphiDz2 = std::abs(dDphiDz2 / dDphiDz_norm);
+
+        double D1 = pull_x1 * pull_x1 + norm_dDphiDz1 * norm_dDphiDz1;
+        double D2 = pull_x2 * pull_x2 + norm_dDphiDz2 * norm_dDphiDz2;
+
+        return D1 < D2;
     }
 
     return false;  // is this appropriate? fix this

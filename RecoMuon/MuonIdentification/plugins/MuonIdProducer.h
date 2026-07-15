@@ -227,6 +227,9 @@ private:
 
   bool debugWithTruthMatching_;
 
+  const GEMGeometry* gemGeometry_ = nullptr;
+
+
   edm::Handle<reco::TrackCollection> innerTrackCollectionHandle_;
   edm::Handle<reco::TrackCollection> outerTrackCollectionHandle_;
   edm::Handle<reco::TrackCollection> outerTrackSecondaryCollectionHandle_;
@@ -256,6 +259,7 @@ private:
   edm::Handle<edm::ValueMap<reco::MuonQuality> > glbQualHandle_;
 
   const edm::ESGetToken<CSCGeometry, MuonGeometryRecord> geomTokenRun_;
+  edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemGeomToken_;
   const edm::ESGetToken<Propagator, TrackingComponentsRecord> propagatorToken_;
   edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> globalGeomToken_;
 

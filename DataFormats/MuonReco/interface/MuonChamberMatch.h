@@ -30,11 +30,7 @@ namespace reco {
     
     int nDigisInRange;  // # of DT/CSC digis in the chamber close-by to the propagated track
     
-    float phi;       // Phi position of the track
-    float phiErr;    // propagation uncertainty in Phi
     float dPhidZ;   // dPhi/dZ of the track
-    float dPhidZErr;// propagation uncertainty in dPhi/dZ
-
     int detector() const { return id.subdetId(); }
     int station() const;
 
