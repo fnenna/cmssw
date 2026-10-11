@@ -20,7 +20,7 @@ from SimGeneral.TruthGraphAssociatorProducers.truthGraphAssociationLabels_cff im
 # the maps and the efficiency denominators from being dominated by soft particles that
 # no reconstruction was going to find; loosen it per domain if a study needs to.
 truthBranchSelectorBlock = cms.PSet(
-    ptMin=cms.float(1.0),
+    ptMin=cms.float(0.5),
     # ptMax deliberately not set: the producer default is the float maximum, no cut.
     etaMin=cms.float(-4.0),
     etaMax=cms.float(4.0),
@@ -81,6 +81,16 @@ allTrackToTruthBranchAssociators = cms.EDProducer(
     recoCollections=_tags("tracks"),
     targetsSrc=cms.InputTag("truthBranchTargets", "selectedRoots"),
     assignableTargetsSrc=cms.InputTag("truthBranchTargets", "assignableRoots"),
+    **_truthSources,
+    **_workingPointArgs,
+)
+
+allGEMSegmentToTruthBranchAssociators = cms.EDProducer(
+    "AllGEMSegmentToTruthBranchAssociatorsProducer",
+    recoCollections=cms.VInputTag(cms.InputTag("gemSegments")),
+    targetsSrc=cms.InputTag("truthBranchTargets", "selectedRoots"),
+    assignableTargetsSrc=cms.InputTag("truthBranchTargets", "assignableRoots"),
+    denominatorDetectors=cms.vstring("Muon"),
     **_truthSources,
     **_workingPointArgs,
 )
@@ -177,6 +187,7 @@ hltTruthBranchTracksterAssociators = truthBranchTracksterAssociators.clone(
 truthGraphAssociatorsSequence = cms.Sequence(
     truthBranchTargets
     + allTrackToTruthBranchAssociators
+    + allGEMSegmentToTruthBranchAssociators
     + truthBranchTracksterAssociators
     + truthBranchPFClusterEcalAssociators
     + truthBranchPFClusterHcalAssociators

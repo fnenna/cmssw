@@ -334,8 +334,13 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
       continue;
     auto trackRef = edm::Ref<reco::TrackCollection>(tracks_h, i);
     const int muId = PFMuonAlgo::muAssocToTrack(trackRef, *muons_h);
-    const reco::MuonRef muonRef(muons_h, muId);
-    if (muonRef.isNonnull() and PFMuonAlgo::isMuon(muonRef)) {
+    if (muId < 0)
+      continue;
+    // Global muons within the muon-system acceptance (|eta| < 2.3), tracker muons beyond it.
+    const reco::Muon &muon = (*muons_h)[muId];
+    const bool isSelectedMuon =
+        std::abs(tracks[i].eta()) < 2.3 ? muon.isGlobalMuon() : muon.isTrackerMuon();
+    if (isSelectedMuon) {
       muonTrackMask[i] = true;
       generalTrackMask[i] = false;
     }

@@ -76,6 +76,7 @@ def customiseTruthGraphAssociators(process):
         out.outputCommands.extend(
             [
                 "keep *_truthBranchTargets_*_*",
+                "keep *_*TruthBranchAssociators_*_*",
                 "keep *_allTrackToTruthBranchAssociators_*_*",
                 "keep *_allVertexToTruthBranchAssociators_*_*",
                 "keep *_allSecondaryVertexToTruthBranchAssociators_*_*",

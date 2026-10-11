@@ -33,6 +33,7 @@
 
 #include "PhysicsTools/TruthInfo/interface/BranchHitAssociator.h"
 #include "PhysicsTools/TruthInfo/interface/TrackerCells.h"
+#include "DataFormats/GEMRecHit/interface/GEMSegment.h"
 
 namespace truth {
 
@@ -88,6 +89,14 @@ namespace truth {
                            [](RecoHit const& a, RecoHit const& b) { return a.detId == b.detId && a.cell == b.cell; }),
                hits.end());
     return hits;
+  }
+
+  inline std::vector<RecoHit> recoHits(GEMSegment const& segment) {
+      std::vector<RecoHit> hits;
+      hits.reserve(segment.specificRecHits().size());
+      for (auto const& hit : segment.specificRecHits())
+          hits.push_back({hit.geographicalId().rawId(), 1.0f});
+      return hits;
   }
 
   // Sort by detId and coalesce duplicates in place (fractions summed), so the

@@ -60,6 +60,9 @@
 #include "SimDataFormats/TruthInfo/interface/Graph.h"
 #include "SimDataFormats/TruthInfo/interface/LogicalGraphHitIndex.h"
 
+#include "DataFormats/GEMRecHit/interface/GEMSegment.h"
+#include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
+
 // The producer template below is a member of this namespace rather than of the anonymous
 // one, and it holds a VertexResolution. A type with internal linkage cannot be the type of
 // a member of a class with external linkage, so this enum needs a named home.
@@ -133,11 +136,17 @@ namespace {
   // produced one cannot drift apart.
   enum class AssociationStrategy { HitBased, ConstituentBased };
 
+  // Primary template: provides the default CollectionType = std::vector<RECO>.
+  // Full specialisations below must also declare CollectionType explicitly — they do NOT
+  // inherit members from the primary template.
   template <typename RECO>
-  struct TruthAssociationTraits;
+  struct TruthAssociationTraits {
+    using CollectionType = std::vector<RECO>;
+  };
 
   template <>
   struct TruthAssociationTraits<reco::Track> {
+    using CollectionType = std::vector<reco::Track>;  // full specialisation: must be explicit
     static constexpr auto strategy = AssociationStrategy::HitBased;
     using MapType = ticl::TICLAssociationMap<ticl::mapWithSharedEnergyAndScore>;
     static constexpr truth::HitChannel channel = truth::HitChannel::Tracker;
@@ -150,6 +159,7 @@ namespace {
   // calculateVertexSharedTracks weights them, not an energy.
   template <>
   struct TruthAssociationTraits<reco::Vertex> {
+    using CollectionType = std::vector<reco::Vertex>;  // full specialisation: must be explicit
     static constexpr auto strategy = AssociationStrategy::ConstituentBased;
     using ConstituentType = reco::Track;
     using MapType = ticl::TICLAssociationMap<ticl::mapWithFractionAndScore>;
@@ -192,6 +202,7 @@ namespace {
   // individual threshold with an ECAL cluster alone.
   template <>
   struct TruthAssociationTraits<reco::PFCluster> {
+    using CollectionType = std::vector<reco::PFCluster>;  // full specialisation: must be explicit
     static constexpr auto strategy = AssociationStrategy::HitBased;
     using MapType = ticl::TICLAssociationMap<ticl::mapWithSharedEnergyAndScore>;
     static constexpr truth::HitChannel channel = truth::HitChannel::Calo;
@@ -205,11 +216,24 @@ namespace {
   // validation scores against, so the two are comparable.
   template <>
   struct TruthAssociationTraits<ticl::Trackster> {
+    using CollectionType = std::vector<ticl::Trackster>;  // full specialisation: must be explicit
     static constexpr auto strategy = AssociationStrategy::HitBased;
     using MapType = ticl::TICLAssociationMap<ticl::mapWithSharedEnergyAndScore>;
     static constexpr truth::HitChannel channel = truth::HitChannel::Calo;
     static constexpr auto metric = truth::BranchHitAssociator::Metric::SharedEnergy;
     static constexpr const char* cfiName = "truthBranchTracksterAssociators";
+  };
+
+  // GEM segments are stored as a RangeMap, not a std::vector: override CollectionType.
+  // The matching metric is shared hits (like tracks), in the Muon hit channel.
+  template <>
+  struct TruthAssociationTraits<GEMSegment> {
+    using CollectionType = GEMSegmentCollection;  // edm::RangeMap<GEMDetId, edm::OwnVector<GEMSegment>>
+    static constexpr auto strategy = AssociationStrategy::HitBased;
+    using MapType = ticl::TICLAssociationMap<ticl::mapWithSharedEnergyAndScore>;
+    static constexpr truth::HitChannel channel = truth::HitChannel::Muon;
+    static constexpr auto metric = truth::BranchHitAssociator::Metric::SharedHits;
+    static constexpr const char* cfiName = "allGEMSegmentToTruthBranchAssociators";
   };
 
   [[nodiscard]] inline std::optional<uint32_t> countingVertex(
@@ -266,7 +290,10 @@ private:
   mutable std::once_flag moduleKeyedWarned_;
   mutable std::once_flag placeholderVertexWarned_;
 
-  std::vector<std::pair<std::string, edm::EDGetTokenT<std::vector<RECO>>>> recoTokens_;
+  using Traits = TruthAssociationTraits<RECO>;
+  using MapType = typename Traits::MapType;
+
+  std::vector<std::pair<std::string, edm::EDGetTokenT<typename Traits::CollectionType>>> recoTokens_;
   // One warning per collection per job when none of its hits is in the configured
   // denominator scope, because every shared-energy fraction is then zero, which reads
   // like a reconstruction that matches nothing. A barrel trackster collection under an
@@ -287,9 +314,6 @@ private:
   edm::EDGetTokenT<std::vector<unsigned int>> targetsToken_;
   // The subset of those roots a reco object may be assigned to, from the same producer.
   edm::EDGetTokenT<std::vector<unsigned int>> assignableTargetsToken_;
-
-  using Traits = TruthAssociationTraits<RECO>;
-  using MapType = typename Traits::MapType;
 
   // Composite domains read their constituents' association maps instead of hits. The
   // upstream module is named by a cms.string and the instance labels are rebuilt here,
@@ -382,7 +406,7 @@ AllRecoToTruthBranchAssociatorsProducer<RECO>::AllRecoToTruthBranchAssociatorsPr
     if (!tag.instance().empty()) {
       key += "_" + tag.instance();
     }
-    recoTokens_.emplace_back(key, consumes<std::vector<RECO>>(tag));
+    recoTokens_.emplace_back(key, consumes<typename Traits::CollectionType>(tag));
 
     if constexpr (ConstituentBasedDomain<RECO>) {
       // One constituent map per working point, in the same order as workingPoints_.
@@ -639,12 +663,13 @@ void AllRecoToTruthBranchAssociatorsProducer<RECO>::produce(edm::StreamID,
     std::vector<std::vector<truth::RecoHit>> recoHitsPerObject;
     if constexpr (!ConstituentBasedDomain<RECO>) {
       recoHitsPerObject.resize(nReco);
-      for (unsigned int i = 0; i < nReco; ++i) {
-        if constexpr (LayerClusterBackedRecoHits<RECO>) {
-          recoHitsPerObject[i] = truth::recoHits(collection[i], *layerClusters);
-        } else {
-          recoHitsPerObject[i] = truth::recoHits(collection[i]);
-        }
+      unsigned int i = 0;
+      for (auto const& object : collection) {
+        if constexpr (LayerClusterBackedRecoHits<RECO>)
+          recoHitsPerObject[i] = truth::recoHits(object, *layerClusters);
+        else
+          recoHitsPerObject[i] = truth::recoHits(object);
+        ++i;
       }
       if constexpr (Traits::metric == truth::BranchHitAssociator::Metric::SharedEnergy) {
         uint32_t seen = 0;
@@ -790,8 +815,14 @@ void AllRecoToTruthBranchAssociatorsProducer<RECO>::produce(edm::StreamID,
       std::vector<truth::BranchMatch> assignableMatches;
       std::vector<truth::BranchMatch> fixedRow;
 
-      for (unsigned int i = 0; i < nReco; ++i) {
+      unsigned int i = 0;
+      // [[maybe_unused]]: the loop variable is needed only for the hit-adapter call
+      // above (first loop); here only the running index i matters for map insertion.
+      // GEMSegmentCollection is a RangeMap and does not support operator[], so we keep
+      // range-for and suppress the "unused variable" warning with the attribute.
+      for ([[maybe_unused]] auto const& object : collection) {
         if (recoHitsPerObject[i].empty()) {
+          ++i;
           continue;
         }
         const std::span<const truth::RecoHit> span(recoHitsPerObject[i]);
@@ -855,6 +886,7 @@ void AllRecoToTruthBranchAssociatorsProducer<RECO>::produce(edm::StreamID,
           const float truthValue = sharedEnergyMetric ? match.sharedEnergyFraction : match.sharedEnergy;
           truthToReco->insert(match.rootParticleId, i, truthValue, match.reverseScore);
         }
+        ++i;
       }
 
       for (std::size_t wpIndex = 0; wpIndex < workingPoints_.size(); ++wpIndex) {
@@ -972,3 +1004,5 @@ using TruthBranchTracksterAssociatorsProducer = AllRecoToTruthBranchAssociatorsP
 DEFINE_FWK_MODULE(TruthBranchTracksterAssociatorsProducer);
 using TruthBranchPFClusterAssociatorsProducer = AllRecoToTruthBranchAssociatorsProducer<reco::PFCluster>;
 DEFINE_FWK_MODULE(TruthBranchPFClusterAssociatorsProducer);
+using AllGEMSegmentToTruthBranchAssociatorsProducer = AllRecoToTruthBranchAssociatorsProducer<GEMSegment>;
+DEFINE_FWK_MODULE(AllGEMSegmentToTruthBranchAssociatorsProducer);

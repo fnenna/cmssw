@@ -133,16 +133,18 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
       candidate.setTrackRef(trackref);
       // Utilize PFMuonAlgo
       const int muId = PFMuonAlgo::muAssocToTrack(trackref, muons);
-      if (muId != -1) {
+      if (muId != -1 && part_type==reco::PFCandidate::mu) {
         const reco::MuonRef muonref = reco::MuonRef(muonH, muId);
-        if ((PFMuonAlgo::isMuon(muonref) and not(*muonH)[muId].isTrackerMuon()) or
-            (ticl_cand.tracksters().empty() and muonref.isNonnull() and muonref->isGlobalMuon())) {
-          const bool allowLoose = (part_type == reco::PFCandidate::mu);
-          // Redefine pfmuon candidate kinematics and add muonref
-          pfmu_->reconstructMuon(candidate, muonref, allowLoose);
+        // Redefine pfmuon candidate kinematics and add muonref. reconstructMuon() applies
+        // PFMuonAlgo::isMuon again and does nothing if it fails: the muon ID is already
+        // done in TICLCandidateProducer, so use the inner (TICL) track and attach the muon.
+        // MuonProducer needs the best-track type, which changeTrack() sets.
+        if (!pfmu_->reconstructMuon(candidate, muonref)) {
+          pfmu_->changeTrack(candidate, std::make_pair(muonref->innerTrack(), reco::Muon::InnerTrack));
+          candidate.setMuonRef(muonref);
+        }
         }
       }
-    }
 
     candidate.setTime(ticl_cand.time(), ticl_cand.timeError());
   }
